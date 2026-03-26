@@ -48,7 +48,7 @@ export default function VideoCard({
               <svg
                 viewBox="0 0 24 24"
                 fill="currentColor"
-                className="w-6 h-6 text-white group-hover/btn:text-neutral-950 ml-1"
+                className="w-6 h-6 text-white group-hover/btn:text-neutral-950"
               >
                 <path d="M8 5v14l11-7z" />
               </svg>
