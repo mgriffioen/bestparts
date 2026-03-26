@@ -19,10 +19,7 @@ export default function RootLayout({
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <a href="/" className="flex items-center gap-2 group">
               <span className="text-2xl font-black tracking-tight text-white group-hover:text-yellow-400 transition-colors">
-                best<span className="text-yellow-400 group-hover:text-white transition-colors">parts</span>
-              </span>
-              <span className="text-xs text-neutral-500 mt-1 hidden sm:block">
-                memorable movie scenes
+                best<span className="text-yellow-400 group-hover:text-white transition-colors">parts</span>.biz
               </span>
             </a>
             <a
