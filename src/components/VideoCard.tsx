@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { getThumbnailUrl } from "@/lib/youtube";
 import VideoModal from "./VideoModal";
+import EditModal from "./EditModal";
 
 interface VideoCardProps {
   id: number;
@@ -15,19 +17,30 @@ interface VideoCardProps {
 }
 
 export default function VideoCard({
+  id,
   youtubeId,
   movieTitle,
   sceneTitle,
   description,
   submittedAt,
 }: VideoCardProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const formattedDate = new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   }).format(new Date(submittedAt));
+
+  async function handleDelete() {
+    if (!confirm("Delete this scene?")) return;
+    setDeleting(true);
+    await fetch(`/api/videos/${id}`, { method: "DELETE" });
+    router.refresh();
+  }
 
   return (
     <>
@@ -45,11 +58,7 @@ export default function VideoCard({
               className="object-cover"
             />
             <span className="relative z-10 bg-black/60 group-hover/btn:bg-yellow-400 transition-colors rounded-full w-14 h-14 flex items-center justify-center">
-              <svg
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-6 h-6 text-white group-hover/btn:text-neutral-950 ml-1"
-              >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white group-hover/btn:text-neutral-950 ml-1">
                 <path d="M8 5v14l11-7z" />
               </svg>
             </span>
@@ -68,7 +77,24 @@ export default function VideoCard({
               {description}
             </p>
           )}
-          <p className="text-neutral-600 text-xs mt-3">{formattedDate}</p>
+          <div className="flex items-center justify-between mt-3">
+            <p className="text-neutral-600 text-xs">{formattedDate}</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setEditing(true)}
+                className="text-neutral-600 hover:text-neutral-300 text-xs transition-colors"
+              >
+                Edit
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="text-neutral-600 hover:text-red-400 text-xs transition-colors disabled:opacity-50"
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
         </div>
       </article>
 
@@ -78,6 +104,16 @@ export default function VideoCard({
           movieTitle={movieTitle}
           sceneTitle={sceneTitle}
           onClose={() => setOpen(false)}
+        />
+      )}
+
+      {editing && (
+        <EditModal
+          id={id}
+          movieTitle={movieTitle}
+          sceneTitle={sceneTitle}
+          description={description}
+          onClose={() => setEditing(false)}
         />
       )}
     </>
