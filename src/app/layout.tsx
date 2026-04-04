@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import HeaderAuthActions from "@/components/HeaderAuthActions";
+import HeaderPrimaryActions from "@/components/HeaderPrimaryActions";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import "./globals.css";
 
@@ -26,15 +26,7 @@ export default async function RootLayout({
                 best<span className="text-yellow-400 group-hover:text-white transition-colors">parts</span>.biz
               </span>
             </a>
-            <div className="flex items-center gap-3">
-              <a
-                href="/submit"
-                className="rounded-lg bg-yellow-400 px-4 py-2 text-sm font-semibold text-neutral-950 transition-colors hover:bg-yellow-300"
-              >
-                + Submit a scene
-              </a>
-              <HeaderAuthActions currentUser={currentUser} />
-            </div>
+            <HeaderPrimaryActions currentUser={currentUser} />
           </div>
         </header>
         <main className="max-w-6xl mx-auto px-4 py-8">{children}</main>

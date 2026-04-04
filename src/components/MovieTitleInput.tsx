@@ -23,11 +23,27 @@ export default function MovieTitleInput({ value, onChange, required }: MovieTitl
       return;
     }
     debounceRef.current = setTimeout(async () => {
-      const res = await fetch(`/api/tmdb?query=${encodeURIComponent(value)}`);
-      const data: string[] = await res.json();
-      setSuggestions(data);
-      setOpen(data.length > 0);
-      setActiveIndex(-1);
+      try {
+        const res = await fetch(`/api/tmdb?query=${encodeURIComponent(value)}`);
+
+        if (!res.ok) {
+          setSuggestions([]);
+          setOpen(false);
+          setActiveIndex(-1);
+          return;
+        }
+
+        const data = await res.json();
+        const nextSuggestions = Array.isArray(data) ? data : [];
+
+        setSuggestions(nextSuggestions);
+        setOpen(nextSuggestions.length > 0);
+        setActiveIndex(-1);
+      } catch {
+        setSuggestions([]);
+        setOpen(false);
+        setActiveIndex(-1);
+      }
     }, 300);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);

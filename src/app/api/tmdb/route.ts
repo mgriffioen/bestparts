@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireApiSession } from "@/lib/auth/route-auth";
 
 export async function GET(req: NextRequest) {
+  const currentUser = await requireApiSession(req);
+
+  if (currentUser instanceof NextResponse) {
+    return currentUser;
+  }
+
   const query = req.nextUrl.searchParams.get("query");
   if (!query || query.trim().length < 2) {
     return NextResponse.json([]);
