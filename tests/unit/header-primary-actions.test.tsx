@@ -28,6 +28,9 @@ describe("HeaderPrimaryActions", () => {
     expect(
       screen.queryByRole("link", { name: "+ Submit a scene" })
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Manage users" })
+    ).not.toBeInTheDocument();
     expect(screen.getByText("guest")).toBeInTheDocument();
   });
 
@@ -37,6 +40,9 @@ describe("HeaderPrimaryActions", () => {
     expect(
       screen.getByRole("link", { name: "+ Submit a scene" })
     ).toHaveAttribute("href", "/submit");
+    expect(
+      screen.getByRole("link", { name: "Manage users" })
+    ).toHaveAttribute("href", "/admin/users");
     expect(screen.getByText("auth")).toBeInTheDocument();
   });
 });

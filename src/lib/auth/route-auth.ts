@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUserFromCookieStore, type CurrentUser } from "./current-user";
-import { assertActiveUser, AuthorizationError } from "./permissions";
+import { assertActiveUser, assertAdmin, AuthorizationError } from "./permissions";
 
 export const PUBLIC_AUTH_API_PATHS = [
   "/api/auth/login/options",
@@ -38,6 +38,28 @@ export async function requireApiSession(
 
   try {
     assertActiveUser(currentUser);
+  } catch (error) {
+    if (error instanceof AuthorizationError) {
+      return jsonForbidden(error.message);
+    }
+
+    throw error;
+  }
+
+  return currentUser;
+}
+
+export async function requireApiAdmin(
+  request: Pick<NextRequest, "cookies">
+): Promise<CurrentUser | NextResponse> {
+  const currentUser = await requireApiSession(request);
+
+  if (currentUser instanceof NextResponse) {
+    return currentUser;
+  }
+
+  try {
+    assertAdmin(currentUser);
   } catch (error) {
     if (error instanceof AuthorizationError) {
       return jsonForbidden(error.message);
