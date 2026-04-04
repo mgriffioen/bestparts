@@ -10,29 +10,32 @@ Just the best parts of movies!
 
 ## PostgreSQL setup
 
-You need a PostgreSQL database before running Prisma migrations. Choose one of these options.
+You need PostgreSQL before running Prisma migrations or the integration test workflow. Keep the application database and test database separate. The current test helpers expect `DATABASE_URL_TEST` to point at a dedicated database or dedicated schema that is not the same value as `DATABASE_URL`.
+
+Recommended local names:
+
+- App database: `bestparts`
+- Test database: `bestparts_test`
+
+Choose one of these options.
 
 ### Option 1: Local PostgreSQL
 
 If PostgreSQL is already installed on your machine, create a local database and point the app at it.
 
-1. Start PostgreSQL.
-2. Create a database:
+1. Start PostgreSQL. You probably installed if via homebrew.
+2. Create the app and test databases:
 
    ```bash
    createdb bestparts
+   createdb bestparts_test
    ```
 
-3. Set `DATABASE_URL` in `.env` using your local PostgreSQL credentials:
-
-   ```env
-   DATABASE_URL="postgresql://<username>:<password>@localhost:5432/bestparts?schema=public"
-   ```
-
-If your local PostgreSQL user does not use a password, this also works:
+3. Set both database URLs in `.env` using your local PostgreSQL credentials. If you used the default setup there won't be a password. Your username should match your login username.
 
 ```env
 DATABASE_URL="postgresql://<username>@localhost:5432/bestparts?schema=public"
+DATABASE_URL_TEST="postgresql://<username>@localhost:5432/bestparts_test?schema=public"
 ```
 
 ### Option 2: Docker
@@ -47,10 +50,17 @@ docker run --name bestparts-postgres \
   -d postgres:16
 ```
 
+Create the separate test database after the container is running:
+
+```bash
+docker exec bestparts-postgres createdb -U postgres bestparts_test
+```
+
 Then use this in `.env`:
 
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bestparts?schema=public"
+DATABASE_URL_TEST="postgresql://postgres:postgres@localhost:5432/bestparts_test?schema=public"
 ```
 
 If you stop the container later, restart it with:
@@ -85,10 +95,17 @@ docker start bestparts-postgres
 
    ```env
    DATABASE_URL="postgresql://postgres:postgres@localhost:5432/bestparts?schema=public"
+   DATABASE_URL_TEST="postgresql://postgres:postgres@localhost:5432/bestparts_test?schema=public"
+   SESSION_SECRET="replace-with-a-long-random-secret"
+   WEBAUTHN_RP_NAME="bestparts"
+   WEBAUTHN_RP_ID="localhost"
+   WEBAUTHN_ORIGIN="http://localhost:3000"
    TMDB_TOKEN="your_tmdb_read_access_token"
    ```
 
    `TMDB_TOKEN` is optional for basic use, but movie title suggestions will not work without it.
+
+   `SESSION_SECRET`, `WEBAUTHN_RP_NAME`, `WEBAUTHN_RP_ID`, and `WEBAUTHN_ORIGIN` are now part of the required auth configuration surface for the passkey work. They are placeholders until the auth routes are implemented.
 
 5. Create the database schema locally.
 
@@ -104,11 +121,35 @@ docker start bestparts-postgres
 
 7. Open [http://localhost:3000](http://localhost:3000).
 
+## Test database workflow
+
+The repo now includes separate unit, integration, and browser test entrypoints:
+
+- `npm run test:unit`
+- `npm run test:integration`
+- `npm run test:e2e`
+
+Before running integration tests against PostgreSQL, make sure `DATABASE_URL_TEST` is set to a dedicated database or dedicated schema.
+
+To reset the test database to the current Prisma schema:
+
+```bash
+npm run db:test:reset
+```
+
+`db:test:reset` uses [tests/setup/test-db.ts](/Users/seanzach/DEV/bestparts/tests/setup/test-db.ts) and refuses to run if `DATABASE_URL_TEST` is missing or exactly matches `DATABASE_URL`.
+
 ## Useful commands
 
 - `npm run dev` starts the Next.js dev server
 - `npm run build` generates the Prisma client, applies deploy migrations, and builds the app
 - `npm run start` starts the production build
+- `npm run typecheck` runs TypeScript without emitting files
+- `npm run test` runs the unit and integration suites
+- `npm run test:unit` runs the Vitest unit project
+- `npm run test:integration` runs the Vitest integration project
+- `npm run test:e2e` runs the Playwright browser test suite
 - `npm run db:migrate` creates and applies local Prisma migrations
+- `npm run db:test:reset` force-resets the dedicated test database to the current Prisma schema
 - `npm run db:generate` regenerates the Prisma client
 - `npm run db:studio` opens Prisma Studio
