@@ -53,6 +53,7 @@ describe("admin user management routes", () => {
   });
 
   beforeEach(async () => {
+    await prisma.videoUpvote.deleteMany();
     await prisma.video.deleteMany();
     await prisma.userSetupToken.deleteMany();
     await prisma.session.deleteMany();

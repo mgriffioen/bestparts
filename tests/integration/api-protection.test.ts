@@ -61,6 +61,7 @@ describe("api route protection", () => {
     vi.restoreAllMocks();
     await prisma.authThrottleBucket.deleteMany();
     await prisma.consumedCeremonyNonce.deleteMany();
+    await prisma.videoUpvote.deleteMany();
     await prisma.video.deleteMany();
     await prisma.userSetupToken.deleteMany();
     await prisma.session.deleteMany();

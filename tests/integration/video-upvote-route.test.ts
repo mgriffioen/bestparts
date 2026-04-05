@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
 import { PrismaClient } from "@prisma/client";
@@ -8,6 +9,7 @@ import {
   buildAnonymousVoterCookie,
   hashAnonymousVoterId,
 } from "@/lib/votes/voter-cookie";
+import { DEFAULT_UPVOTE_GLOBAL_LIMIT } from "@/lib/votes/rate-limit";
 
 describe("public video upvote route", () => {
   const prisma = new PrismaClient({
@@ -296,6 +298,120 @@ describe("public video upvote route", () => {
     expect(throttledPayload.scope).toBe("browser");
     expect(throttledPayload.retryAfterMs).toBeGreaterThan(0);
     expect(throttledResponse.headers.get("Retry-After")).toBeTruthy();
+  });
+
+  it("rate-limits globally even when the anonymous voter cookie changes between requests", async () => {
+    const video = await prisma.video.create({
+      data: {
+        youtubeId: "abc123def45",
+        movieTitle: "Heat",
+        sceneTitle: "Downtown shootout",
+      },
+    });
+
+    for (let attempt = 0; attempt < DEFAULT_UPVOTE_GLOBAL_LIMIT; attempt += 1) {
+      const response = await upvotePost(
+        createRequest(`/api/videos/${video.id}/upvote`, {
+          cookies: {
+            [ANONYMOUS_VOTER_COOKIE_NAME]: buildAnonymousVoterCookie({
+              version: 1,
+              voterId: randomUUID(),
+            }).value,
+          },
+        }),
+        {
+          params: Promise.resolve({ id: String(video.id) }),
+        }
+      );
+
+      expect(response.status).toBe(200);
+    }
+
+    const throttledResponse = await upvotePost(
+      createRequest(`/api/videos/${video.id}/upvote`, {
+        cookies: {
+          [ANONYMOUS_VOTER_COOKIE_NAME]: buildAnonymousVoterCookie({
+            version: 1,
+            voterId: randomUUID(),
+          }).value,
+        },
+      }),
+      {
+        params: Promise.resolve({ id: String(video.id) }),
+      }
+    );
+    const throttledPayload = await throttledResponse.json();
+
+    expect(throttledResponse.status).toBe(429);
+    expect(throttledPayload.scope).toBe("global");
+    expect(throttledPayload.retryAfterMs).toBeGreaterThan(0);
+    await expect(
+      prisma.video.findUnique({
+        where: {
+          id: video.id,
+        },
+      })
+    ).resolves.toMatchObject({
+      upvoteCount: DEFAULT_UPVOTE_GLOBAL_LIMIT,
+    });
+  });
+
+  it("only increments once for concurrent attempts from the same anonymous voter", async () => {
+    const voterId = randomUUID();
+    const video = await prisma.video.create({
+      data: {
+        youtubeId: "abc123def45",
+        movieTitle: "Heat",
+        sceneTitle: "Downtown shootout",
+      },
+    });
+
+    const [firstResponse, secondResponse] = await Promise.all([
+      upvotePost(
+        createRequest(`/api/videos/${video.id}/upvote`, {
+          cookies: {
+            [ANONYMOUS_VOTER_COOKIE_NAME]: buildAnonymousVoterCookie({
+              version: 1,
+              voterId,
+            }).value,
+          },
+        }),
+        {
+          params: Promise.resolve({ id: String(video.id) }),
+        }
+      ),
+      upvotePost(
+        createRequest(`/api/videos/${video.id}/upvote`, {
+          cookies: {
+            [ANONYMOUS_VOTER_COOKIE_NAME]: buildAnonymousVoterCookie({
+              version: 1,
+              voterId,
+            }).value,
+          },
+        }),
+        {
+          params: Promise.resolve({ id: String(video.id) }),
+        }
+      ),
+    ]);
+    const statuses = [firstResponse.status, secondResponse.status].sort(
+      (left, right) => left - right
+    );
+    const storedVideo = await prisma.video.findUnique({
+      where: {
+        id: video.id,
+      },
+    });
+    const storedUpvotes = await prisma.videoUpvote.findMany({
+      where: {
+        videoId: video.id,
+        voterKeyHash: hashAnonymousVoterId(voterId),
+      },
+    });
+
+    expect(statuses).toEqual([200, 409]);
+    expect(storedVideo?.upvoteCount).toBe(1);
+    expect(storedUpvotes).toHaveLength(1);
   });
 });
 

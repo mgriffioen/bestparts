@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import {
   buildSessionCookieForBaseUrl,
   createE2EPrismaClient,
@@ -40,6 +40,92 @@ test.describe("browser auth and admin flows", () => {
     await expect(
       page.getByRole("heading", { name: "Sign in with your username and passkey." })
     ).toBeVisible();
+  });
+
+  test("guest upvoting uses vote sorting by default and preserves cooldown across reloads", async ({
+    page,
+  }) => {
+    await prisma.video.create({
+      data: {
+        youtubeId: "oldscene001",
+        movieTitle: "Heat",
+        sceneTitle: "Already top voted",
+        description: "The current leader.",
+        submittedAt: new Date("2026-04-03T20:00:00.000Z"),
+        upvoteCount: 2,
+      },
+    });
+    await prisma.video.create({
+      data: {
+        youtubeId: "newscene002",
+        movieTitle: "Arrival",
+        sceneTitle: "Almost top voted",
+        description: "One vote behind.",
+        submittedAt: new Date("2026-04-04T20:00:00.000Z"),
+        upvoteCount: 1,
+      },
+    });
+
+    let upvoteRequestCount = 0;
+
+    await page.route("**/api/videos/*/upvote", async (route) => {
+      upvoteRequestCount += 1;
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      await route.continue();
+    });
+
+    await page.goto("/");
+
+    await expect(page.getByRole("link", { name: "Top voted" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+    await expect.poll(() => getSceneTitleOrder(page)).toEqual([
+      "Already top voted",
+      "Almost top voted",
+    ]);
+
+    const almostTopCard = getVideoCard(page, "Almost top voted");
+
+    await expect(
+      almostTopCard.getByRole("button", { name: "Upvote video (1 votes)" })
+    ).toHaveText("👍✌️");
+
+    await page.goto("/?sort=date");
+
+    await expect(page.getByRole("link", { name: "Newest" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+    await expect.poll(() => getSceneTitleOrder(page)).toEqual([
+      "Almost top voted",
+      "Already top voted",
+    ]);
+
+    await page.goto("/");
+
+    const voteButton = getVideoCard(page, "Almost top voted").getByRole("button", {
+      name: "Upvote video (1 votes)",
+    });
+
+    await voteButton.dblclick();
+
+    await expect.poll(() => upvoteRequestCount).toBe(1);
+    await expect
+      .poll(() => getSceneTitleOrder(page))
+      .toEqual(["Almost top voted", "Already top voted"]);
+
+    const cooledDownButton = getVideoCard(page, "Almost top voted").getByRole("button", {
+      name: "Upvote video (2 votes)",
+    });
+
+    await expect(cooledDownButton).toBeDisabled();
+    await page.reload();
+    await expect(
+      getVideoCard(page, "Almost top voted").getByRole("button", {
+        name: "Upvote video (2 votes)",
+      })
+    ).toBeDisabled();
   });
 
   test("an authenticated admin can create a user and copy a setup URL", async ({
@@ -89,3 +175,13 @@ test.describe("browser auth and admin flows", () => {
     await expect(page.getByText("Link copied.")).toBeVisible();
   });
 });
+
+function getVideoCard(page: Page, sceneTitle: string) {
+  return page.locator("article").filter({
+    has: page.getByRole("heading", { level: 2, name: sceneTitle }),
+  });
+}
+
+async function getSceneTitleOrder(page: Page): Promise<string[]> {
+  return page.locator("article h2").allTextContents();
+}

@@ -22,6 +22,7 @@ export function createE2EPrismaClient(): PrismaClient {
 export async function resetE2EDatabase(prisma: PrismaClient): Promise<void> {
   await prisma.authThrottleBucket.deleteMany();
   await prisma.consumedCeremonyNonce.deleteMany();
+  await prisma.videoUpvote.deleteMany();
   await prisma.video.deleteMany();
   await prisma.userSetupToken.deleteMany();
   await prisma.session.deleteMany();
