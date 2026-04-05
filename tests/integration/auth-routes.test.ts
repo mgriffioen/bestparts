@@ -85,6 +85,8 @@ describe("auth route handlers", () => {
     vi.clearAllMocks();
     await prisma.authThrottleBucket.deleteMany();
     await prisma.consumedCeremonyNonce.deleteMany();
+    await prisma.videoUpvote.deleteMany();
+    await prisma.video.deleteMany();
 
     mockFns.createRegistrationOptionsForUser.mockResolvedValue({
       challenge: "setup-challenge",

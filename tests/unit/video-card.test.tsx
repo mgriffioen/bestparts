@@ -34,11 +34,26 @@ vi.mock("@/components/UpvoteButton", () => ({
     videoId: number;
     upvoteCount: number;
     nextEligibleUpvoteAt: Date | null;
-  }) => (
-    <div data-testid="upvote-button-props">
-      {`${videoId}|${upvoteCount}|${nextEligibleUpvoteAt?.toISOString() ?? "null"}`}
-    </div>
-  ),
+  }) => {
+    const nextEligibleIso = nextEligibleUpvoteAt?.toISOString() ?? "null";
+
+    return (
+      <div
+        data-testid="upvote-button-props"
+        data-video-id={String(videoId)}
+        data-next-eligible-upvote-at={nextEligibleIso}
+      >
+        <button
+          type="button"
+          aria-label={`Upvote video (${upvoteCount} votes)`}
+          disabled={Boolean(nextEligibleUpvoteAt)}
+        >
+          👍✌️
+        </button>
+        <span>{upvoteCount}</span>
+      </div>
+    );
+  },
 }));
 
 const baseProps = {
@@ -67,11 +82,39 @@ describe("VideoCard", () => {
     expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
   });
 
-  it("passes vote state to the upvote control and keeps it separate from manage actions", () => {
+  it("renders the vote count and an available upvote action when the viewer is eligible", () => {
+    render(
+      <VideoCard
+        {...baseProps}
+        upvoteCount={7}
+        nextEligibleUpvoteAt={null}
+        canManage={false}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "Upvote video (7 votes)" })).toBeEnabled();
+    expect(screen.getByText("7")).toBeInTheDocument();
+    expect(screen.getByTestId("upvote-button-props")).toHaveAttribute(
+      "data-video-id",
+      "1"
+    );
+    expect(screen.getByTestId("upvote-button-props")).toHaveAttribute(
+      "data-next-eligible-upvote-at",
+      "null"
+    );
+    expect(screen.queryByRole("button", { name: "Edit" })).not.toBeInTheDocument();
+  });
+
+  it("renders the cooldown vote state separately from manage actions", () => {
     render(<VideoCard {...baseProps} canManage={false} />);
 
-    expect(screen.getByTestId("upvote-button-props")).toHaveTextContent(
-      "1|12|2026-04-05T20:00:00.000Z"
+    expect(
+      screen.getByRole("button", { name: "Upvote video (12 votes)" })
+    ).toBeDisabled();
+    expect(screen.getByText("12")).toBeInTheDocument();
+    expect(screen.getByTestId("upvote-button-props")).toHaveAttribute(
+      "data-next-eligible-upvote-at",
+      "2026-04-05T20:00:00.000Z"
     );
     expect(screen.queryByRole("button", { name: "Edit" })).not.toBeInTheDocument();
   });

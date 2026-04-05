@@ -41,6 +41,29 @@ export async function seedGuestVideo(prisma: PrismaClient): Promise<void> {
   });
 }
 
+export async function seedGuestSortScenario(prisma: PrismaClient): Promise<void> {
+  await prisma.video.createMany({
+    data: [
+      {
+        youtubeId: "oldscene001",
+        movieTitle: "Heat",
+        sceneTitle: "Already top voted",
+        description: "The current leader.",
+        submittedAt: new Date("2026-04-03T20:00:00.000Z"),
+        upvoteCount: 2,
+      },
+      {
+        youtubeId: "newscene002",
+        movieTitle: "Arrival",
+        sceneTitle: "Almost top voted",
+        description: "One vote behind.",
+        submittedAt: new Date("2026-04-04T20:00:00.000Z"),
+        upvoteCount: 1,
+      },
+    ],
+  });
+}
+
 export async function seedAdminSession(
   prisma: PrismaClient,
   username = "browser-admin"

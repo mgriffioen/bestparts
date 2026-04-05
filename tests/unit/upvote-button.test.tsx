@@ -17,13 +17,13 @@ describe("UpvoteButton", () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-04-05T21:00:00.000Z"));
-    localStorage.clear();
+    window.localStorage.clear();
   });
 
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
-    localStorage.clear();
+    window.localStorage.clear();
   });
 
   it("renders the vote label and count", () => {
@@ -185,7 +185,7 @@ describe("UpvoteButton", () => {
   });
 
   it("trusts the server-provided cooldown over stored daily local state on first render", async () => {
-    localStorage.setItem(
+    window.localStorage.setItem(
       "bestparts:upvote-cooldown:1",
       JSON.stringify({
         dailyCooldownAt: "2026-04-07T00:00:00.000Z",
@@ -219,7 +219,9 @@ describe("UpvoteButton", () => {
 });
 
 function readStoredCooldown(videoId: number) {
-  const rawValue = localStorage.getItem(`bestparts:upvote-cooldown:${videoId}`);
+  const rawValue = window.localStorage.getItem(
+    `bestparts:upvote-cooldown:${videoId}`
+  );
 
   return rawValue ? JSON.parse(rawValue) : null;
 }
