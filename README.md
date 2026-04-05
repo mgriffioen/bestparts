@@ -140,7 +140,7 @@ To reset the test database to the current Prisma schema:
 npm run db:test:reset
 ```
 
-`db:test:reset` uses [tests/setup/test-db.ts](/Users/seanzach/DEV/bestparts/tests/setup/test-db.ts) and refuses to run if `DATABASE_URL_TEST` is missing or exactly matches `DATABASE_URL`.
+`db:test:reset` uses tests/setup/test-db.ts and refuses to run if `DATABASE_URL_TEST` is missing or exactly matches `DATABASE_URL`.
 
 ## Security Shit
 ### Auth throttle policy
