@@ -21,9 +21,9 @@ export default async function RootLayout({
     <html lang="en">
       <body className="bg-neutral-950 text-neutral-100 min-h-screen antialiased">
         <header className="border-b border-neutral-800">
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
-            <Link href="/" className="flex items-center gap-2 group">
-              <span className="text-2xl font-black tracking-tight text-white group-hover:text-yellow-400 transition-colors">
+          <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <Link href="/" className="group flex shrink-0 items-center gap-2 self-start">
+              <span className="text-2xl font-black leading-none tracking-tight text-white transition-colors group-hover:text-yellow-400">
                 best<span className="text-yellow-400 group-hover:text-white transition-colors">parts</span>.biz
               </span>
             </Link>

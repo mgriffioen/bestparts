@@ -21,6 +21,10 @@ type SetupTokenRecord = UserSetupToken & {
   issuedByUser: User | null;
 };
 
+const CREATED_AT = new Date("2026-04-04T18:00:00.000Z");
+const ACTIVE_CHECK_AT = new Date("2026-04-04T18:05:00.000Z");
+const EXPIRED_CHECK_AT = new Date("2026-04-04T18:00:02.000Z");
+
 function createSetupTokenClient(): SetupTokenClientLike & { records: SetupTokenRecord[] } {
   const user: User & { passkeys: Passkey[] } = {
     id: "user_123",
@@ -110,10 +114,10 @@ describe("setup token helpers", () => {
     const created = await createSetupToken(client, {
       userId: "user_123",
       reason: SetupTokenReason.INITIAL_ENROLLMENT,
-      now: new Date("2026-04-04T18:00:00.000Z"),
+      now: CREATED_AT,
     });
 
-    const loaded = await getActiveSetupToken(client, created.rawToken);
+    const loaded = await getActiveSetupToken(client, created.rawToken, ACTIVE_CHECK_AT);
 
     expect(created.setupPath).toContain(created.rawToken);
     expect(loaded?.id).toBe(created.record.id);
@@ -122,10 +126,11 @@ describe("setup token helpers", () => {
   it("consumes setup tokens once", async () => {
     const created = await createSetupToken(client, {
       userId: "user_123",
+      now: CREATED_AT,
     });
 
-    const consumed = await consumeSetupToken(client, created.rawToken);
-    const secondConsume = await consumeSetupToken(client, created.rawToken);
+    const consumed = await consumeSetupToken(client, created.rawToken, ACTIVE_CHECK_AT);
+    const secondConsume = await consumeSetupToken(client, created.rawToken, ACTIVE_CHECK_AT);
 
     expect(consumed?.usedAt).toBeInstanceOf(Date);
     expect(secondConsume).toBeNull();
@@ -134,27 +139,31 @@ describe("setup token helpers", () => {
   it("rejects expired setup tokens", async () => {
     const created = await createSetupToken(client, {
       userId: "user_123",
-      now: new Date("2026-04-04T18:00:00.000Z"),
+      now: CREATED_AT,
       ttlMs: 1_000,
     });
 
     const loaded = await getActiveSetupToken(
       client,
       created.rawToken,
-      new Date("2026-04-04T18:00:02.000Z")
+      EXPIRED_CHECK_AT
     );
 
     expect(loaded).toBeNull();
   });
 
   it("revokes all active tokens for a user", async () => {
-    await createSetupToken(client, { userId: "user_123" });
-    await createSetupToken(client, { userId: "user_123", reason: SetupTokenReason.RECOVERY });
+    await createSetupToken(client, { userId: "user_123", now: CREATED_AT });
+    await createSetupToken(client, {
+      userId: "user_123",
+      reason: SetupTokenReason.RECOVERY,
+      now: CREATED_AT,
+    });
 
     const revokedCount = await revokeActiveSetupTokensForUser(
       client,
       "user_123",
-      new Date("2026-04-04T18:00:00.000Z")
+      ACTIVE_CHECK_AT
     );
 
     expect(revokedCount).toBe(2);
