@@ -1,8 +1,10 @@
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 export const TRUST_PROXY_HEADERS_ENV = "AUTH_TRUST_PROXY_HEADERS";
 
 const UNSAFE_HTTP_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+export type JsonRateLimitScope = "browser" | "ip" | "global";
 
 export class MutationOriginError extends Error {
   constructor(message = "Cross-site mutation requests are not allowed.") {
@@ -84,8 +86,60 @@ export function assertSameOriginMutationRequest(
   throw new MutationOriginError();
 }
 
+export function jsonForbidden(message = "Forbidden."): NextResponse {
+  return NextResponse.json({ error: message }, { status: 403 });
+}
+
+export function jsonRateLimitError(options: {
+  error: string;
+  retryAfterMs: number;
+  scope: JsonRateLimitScope;
+}): NextResponse {
+  const headers = new Headers();
+
+  if (options.retryAfterMs > 0) {
+    headers.set(
+      "Retry-After",
+      String(Math.max(Math.ceil(options.retryAfterMs / 1000), 1))
+    );
+  }
+
+  return NextResponse.json(
+    {
+      error: options.error,
+      retryAfterMs: options.retryAfterMs,
+      scope: options.scope,
+    },
+    {
+      status: 429,
+      headers,
+    }
+  );
+}
+
+export function jsonVoteCooldownError(options: {
+  error: string;
+  retryAfterMs: number;
+  nextEligibleUpvoteAt: Date | string;
+}): NextResponse {
+  return NextResponse.json(
+    {
+      error: options.error,
+      retryAfterMs: options.retryAfterMs,
+      nextEligibleUpvoteAt: serializeDateLike(options.nextEligibleUpvoteAt),
+    },
+    {
+      status: 409,
+    }
+  );
+}
+
 function shouldTrustProxyHeaders(): boolean {
   const value = process.env[TRUST_PROXY_HEADERS_ENV]?.trim().toLowerCase();
 
   return value === "1" || value === "true" || value === "yes" || value === "on";
+}
+
+function serializeDateLike(value: Date | string): string {
+  return value instanceof Date ? value.toISOString() : value;
 }

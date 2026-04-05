@@ -3,6 +3,9 @@ import { NextRequest } from "next/server";
 import {
   assertSameOriginMutationRequest,
   getTrustedClientIpAddress,
+  jsonForbidden,
+  jsonRateLimitError,
+  jsonVoteCooldownError,
   MutationOriginError,
   TRUST_PROXY_HEADERS_ENV,
 } from "@/app/api/_shared";
@@ -114,6 +117,46 @@ describe("api shared helpers", () => {
     const request = createRequest("http://localhost/api/videos/1/upvote");
 
     expect(() => assertSameOriginMutationRequest(request)).not.toThrow();
+  });
+
+  it("builds a forbidden json response", async () => {
+    const response = jsonForbidden();
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      error: "Forbidden.",
+    });
+  });
+
+  it("builds a scoped rate-limit json response with retry headers", async () => {
+    const response = jsonRateLimitError({
+      error: "Too many upvote attempts. Please try again later.",
+      retryAfterMs: 1_250,
+      scope: "global",
+    });
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("2");
+    await expect(response.json()).resolves.toEqual({
+      error: "Too many upvote attempts. Please try again later.",
+      retryAfterMs: 1_250,
+      scope: "global",
+    });
+  });
+
+  it("builds a vote cooldown response with an explicit eligibility timestamp", async () => {
+    const response = jsonVoteCooldownError({
+      error: "This browser can upvote this video again later.",
+      retryAfterMs: 60_000,
+      nextEligibleUpvoteAt: new Date("2026-04-06T00:00:00.000Z"),
+    });
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: "This browser can upvote this video again later.",
+      retryAfterMs: 60_000,
+      nextEligibleUpvoteAt: "2026-04-06T00:00:00.000Z",
+    });
   });
 });
 
