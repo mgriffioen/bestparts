@@ -4,16 +4,26 @@
   "description": "",
   "private": true,
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=24.14.1 <25"
   },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "test:e2e": "playwright test",
     "db:migrate": "prisma migrate dev",
+    "db:bootstrap-admin": "node --import tsx prisma/seed.ts",
+    "db:test:reset": "node --import tsx tests/setup/test-db.ts reset",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "node --import tsx prisma/seed.ts"
   },
   "repository": {
     "type": "git",
@@ -23,19 +33,32 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@simplewebauthn/browser": "^13.3.0",
+    "@simplewebauthn/server": "^13.3.0",
     "next": "^16.2.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.5",
+    "@playwright/test": "^1.59.1",
     "@prisma/client": "^5.22.0",
     "@tailwindcss/postcss": "^4.2.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@vitest/coverage-v8": "^4.1.2",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.2",
+    "jsdom": "^24.1.3",
     "postcss": "^8.5.8",
     "prisma": "^5.22.0",
+    "supertest": "^7.2.2",
     "tailwindcss": "^4.2.2",
-    "typescript": "^6.0.2"
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
   }
 }

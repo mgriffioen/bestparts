@@ -14,6 +14,7 @@ interface VideoCardProps {
   sceneTitle: string;
   description: string | null;
   submittedAt: Date;
+  canManage?: boolean;
 }
 
 export default function VideoCard({
@@ -23,11 +24,13 @@ export default function VideoCard({
   sceneTitle,
   description,
   submittedAt,
+  canManage = false,
 }: VideoCardProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const formattedDate = new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -37,9 +40,26 @@ export default function VideoCard({
 
   async function handleDelete() {
     if (!confirm("Delete this scene?")) return;
+    setDeleteError(null);
     setDeleting(true);
-    await fetch(`/api/videos/${id}`, { method: "DELETE" });
-    router.refresh();
+
+    try {
+      const response = await fetch(`/api/videos/${id}`, { method: "DELETE" });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        setDeleteError(
+          payload?.error ?? "Failed to delete this scene. Please try again."
+        );
+        return;
+      }
+
+      router.refresh();
+    } catch {
+      setDeleteError("Network error. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
@@ -79,22 +99,27 @@ export default function VideoCard({
           )}
           <div className="flex items-center justify-between mt-auto pt-3">
             <p className="text-neutral-600 text-xs">{formattedDate}</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setEditing(true)}
-                className="text-neutral-600 hover:text-neutral-300 text-xs transition-colors"
-              >
-                Edit
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="text-neutral-600 hover:text-red-400 text-xs transition-colors disabled:opacity-50"
-              >
-                {deleting ? "Deleting…" : "Delete"}
-              </button>
-            </div>
+            {canManage && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setEditing(true)}
+                  className="text-neutral-600 hover:text-neutral-300 text-xs transition-colors"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="text-neutral-600 hover:text-red-400 text-xs transition-colors disabled:opacity-50"
+                >
+                  {deleting ? "Deleting…" : "Delete"}
+                </button>
+              </div>
+            )}
           </div>
+          {deleteError && (
+            <p className="mt-3 text-xs text-red-300">{deleteError}</p>
+          )}
         </div>
       </article>
 
@@ -107,7 +132,7 @@ export default function VideoCard({
         />
       )}
 
-      {editing && (
+      {canManage && editing && (
         <EditModal
           id={id}
           movieTitle={movieTitle}

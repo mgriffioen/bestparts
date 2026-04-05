@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireApiSession } from "@/lib/auth/route-auth";
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const currentUser = await requireApiSession(req);
+
+  if (currentUser instanceof NextResponse) {
+    return currentUser;
+  }
+
   const { id } = await params;
   const videoId = parseInt(id);
   if (isNaN(videoId)) {
@@ -34,9 +41,15 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const currentUser = await requireApiSession(req);
+
+  if (currentUser instanceof NextResponse) {
+    return currentUser;
+  }
+
   const { id } = await params;
   const videoId = parseInt(id);
   if (isNaN(videoId)) {
