@@ -9,7 +9,10 @@ import {
   buildAnonymousVoterCookie,
   hashAnonymousVoterId,
 } from "@/lib/votes/voter-cookie";
-import { DEFAULT_UPVOTE_GLOBAL_LIMIT } from "@/lib/votes/rate-limit";
+import {
+  DEFAULT_UPVOTE_GLOBAL_LIMIT,
+  DEFAULT_UPVOTE_IP_LIMIT,
+} from "@/lib/votes/rate-limit";
 
 describe("public video upvote route", () => {
   const prisma = new PrismaClient({
@@ -354,6 +357,140 @@ describe("public video upvote route", () => {
     ).resolves.toMatchObject({
       upvoteCount: DEFAULT_UPVOTE_GLOBAL_LIMIT,
     });
+  });
+
+  it("rate-limits by trusted proxy ip when proxy headers are explicitly enabled", async () => {
+    const originalSetting = process.env.AUTH_TRUST_PROXY_HEADERS;
+    process.env.AUTH_TRUST_PROXY_HEADERS = "true";
+
+    try {
+      const video = await prisma.video.create({
+        data: {
+          youtubeId: "trustedip001",
+          movieTitle: "Heat",
+          sceneTitle: "Armored car ambush",
+        },
+      });
+
+      for (let attempt = 0; attempt < DEFAULT_UPVOTE_IP_LIMIT; attempt += 1) {
+        const response = await upvotePost(
+          createRequest(`/api/videos/${video.id}/upvote`, {
+            cookies: {
+              [ANONYMOUS_VOTER_COOKIE_NAME]: buildAnonymousVoterCookie({
+                version: 1,
+                voterId: randomUUID(),
+              }).value,
+            },
+            headers: {
+              "x-forwarded-for": "203.0.113.10",
+            },
+          }),
+          {
+            params: Promise.resolve({ id: String(video.id) }),
+          }
+        );
+
+        expect(response.status).toBe(200);
+      }
+
+      const blockedResponse = await upvotePost(
+        createRequest(`/api/videos/${video.id}/upvote`, {
+          cookies: {
+            [ANONYMOUS_VOTER_COOKIE_NAME]: buildAnonymousVoterCookie({
+              version: 1,
+              voterId: randomUUID(),
+            }).value,
+          },
+          headers: {
+            "x-forwarded-for": "203.0.113.10",
+          },
+        }),
+        {
+          params: Promise.resolve({ id: String(video.id) }),
+        }
+      );
+      const blockedPayload = await blockedResponse.json();
+
+      expect(blockedResponse.status).toBe(429);
+      expect(blockedPayload.scope).toBe("ip");
+      expect(blockedPayload.retryAfterMs).toBeGreaterThan(0);
+
+      const freshIpResponse = await upvotePost(
+        createRequest(`/api/videos/${video.id}/upvote`, {
+          cookies: {
+            [ANONYMOUS_VOTER_COOKIE_NAME]: buildAnonymousVoterCookie({
+              version: 1,
+              voterId: randomUUID(),
+            }).value,
+          },
+          headers: {
+            "x-forwarded-for": "203.0.113.11",
+          },
+        }),
+        {
+          params: Promise.resolve({ id: String(video.id) }),
+        }
+      );
+      const updatedVideo = await prisma.video.findUnique({
+        where: {
+          id: video.id,
+        },
+      });
+
+      expect(freshIpResponse.status).toBe(200);
+      expect(updatedVideo?.upvoteCount).toBe(DEFAULT_UPVOTE_IP_LIMIT + 1);
+    } finally {
+      process.env.AUTH_TRUST_PROXY_HEADERS = originalSetting;
+    }
+  });
+
+  it("ignores spoofed proxy headers for ip throttling when proxy trust is disabled", async () => {
+    const originalSetting = process.env.AUTH_TRUST_PROXY_HEADERS;
+    delete process.env.AUTH_TRUST_PROXY_HEADERS;
+
+    try {
+      const video = await prisma.video.create({
+        data: {
+          youtubeId: "defaultip001",
+          movieTitle: "Alien",
+          sceneTitle: "Self-destruct sequence",
+        },
+      });
+
+      for (let attempt = 0; attempt < DEFAULT_UPVOTE_IP_LIMIT + 1; attempt += 1) {
+        const response = await upvotePost(
+          createRequest(`/api/videos/${video.id}/upvote`, {
+            cookies: {
+              [ANONYMOUS_VOTER_COOKIE_NAME]: buildAnonymousVoterCookie({
+                version: 1,
+                voterId: randomUUID(),
+              }).value,
+            },
+            headers: {
+              "x-forwarded-for": "203.0.113.10",
+              "x-real-ip": "198.51.100.20",
+            },
+          }),
+          {
+            params: Promise.resolve({ id: String(video.id) }),
+          }
+        );
+
+        expect(response.status).toBe(200);
+      }
+
+      await expect(
+        prisma.video.findUnique({
+          where: {
+            id: video.id,
+          },
+        })
+      ).resolves.toMatchObject({
+        upvoteCount: DEFAULT_UPVOTE_IP_LIMIT + 1,
+      });
+    } finally {
+      process.env.AUTH_TRUST_PROXY_HEADERS = originalSetting;
+    }
   });
 
   it("only increments once for concurrent attempts from the same anonymous voter", async () => {
