@@ -8,8 +8,8 @@ export default function HomeSortControls({ sort }: { sort: HomeSort }) {
       aria-label="Sort videos"
       className="mb-6 flex items-center gap-2 text-sm"
     >
-      <SortLink href="/" label="Newest" active={sort === "date"} />
-      <SortLink href="/?sort=votes" label="Top voted" active={sort === "votes"} />
+      <SortLink href="/" label="Top voted" active={sort === "votes"} />
+      <SortLink href="/?sort=date" label="Newest" active={sort === "date"} />
     </nav>
   );
 }
