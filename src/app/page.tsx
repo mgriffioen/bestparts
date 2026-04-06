@@ -15,7 +15,7 @@ import {
 export const dynamic = "force-dynamic";
 
 function normalizeHomeSort(sort: string | undefined): HomeSort {
-  return sort === "date" ? "date" : "votes";
+  return sort === "votes" ? "votes" : "date";
 }
 
 function getHomePageOrderBy(sort: HomeSort): Prisma.VideoOrderByWithRelationInput[] {
