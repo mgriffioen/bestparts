@@ -17,13 +17,13 @@ describe("UpvoteButton", () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-04-05T21:00:00.000Z"));
-    clearLocalStorage();
+    window.localStorage.clear();
   });
 
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
-    clearLocalStorage();
+    window.localStorage.clear();
   });
 
   it("renders the vote label and count", () => {
@@ -229,21 +229,4 @@ function readStoredCooldown(videoId: number) {
 async function settle() {
   await Promise.resolve();
   await Promise.resolve();
-}
-
-function clearLocalStorage() {
-  const storage = window.localStorage;
-
-  if (typeof storage.clear === "function") {
-    storage.clear();
-    return;
-  }
-
-  for (let index = storage.length - 1; index >= 0; index -= 1) {
-    const key = storage.key(index);
-
-    if (key) {
-      storage.removeItem(key);
-    }
-  }
 }
