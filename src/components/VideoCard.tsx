@@ -37,11 +37,12 @@ export default function VideoCard({
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const formattedDate = new Intl.DateTimeFormat("en-US", {
+  const formattedDate = new Date(submittedAt).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
-  }).format(new Date(submittedAt));
+    timeZone: "UTC",
+  });
 
   async function handleDelete() {
     if (!confirm("Delete this scene?")) return;
