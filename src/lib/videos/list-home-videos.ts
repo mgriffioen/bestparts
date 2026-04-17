@@ -12,6 +12,14 @@ export function normalizeHomeSort(sort: string | undefined): HomeSort {
   return sort === "votes" ? "votes" : "date";
 }
 
+export function normalizeTitleQuery(
+  titleQuery: string | undefined
+): string | undefined {
+  const normalizedTitleQuery = titleQuery?.trim();
+
+  return normalizedTitleQuery ? normalizedTitleQuery : undefined;
+}
+
 export async function listHomeVideos(
   client: VideoQueryClient,
   {
@@ -38,12 +46,6 @@ export async function listHomeVideos(
       : {}),
     orderBy,
   });
-}
-
-function normalizeTitleQuery(titleQuery: string | undefined): string | undefined {
-  const normalizedTitleQuery = titleQuery?.trim();
-
-  return normalizedTitleQuery ? normalizedTitleQuery : undefined;
 }
 
 function getHomePageOrderBy(sort: HomeSort): Prisma.VideoOrderByWithRelationInput[] {

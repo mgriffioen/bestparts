@@ -1,16 +1,46 @@
 import Link from "next/link";
 import type { HomeSort } from "@/lib/videos/list-home-videos";
 
-export default function HomeSortControls({ sort }: { sort: HomeSort }) {
+export default function HomeSortControls({
+  sort,
+  titleQuery,
+}: {
+  sort: HomeSort;
+  titleQuery?: string;
+}) {
   return (
     <nav
       aria-label="Sort videos"
       className="mb-6 flex items-center gap-2 text-sm"
     >
-      <SortLink href="/" label="Newest" active={sort === "date"} />
-      <SortLink href="/?sort=votes" label="Top voted" active={sort === "votes"} />
+      <SortLink
+        href={buildSortHref("date", titleQuery)}
+        label="Newest"
+        active={sort === "date"}
+      />
+      <SortLink
+        href={buildSortHref("votes", titleQuery)}
+        label="Top voted"
+        active={sort === "votes"}
+      />
     </nav>
   );
+}
+
+function buildSortHref(sort: HomeSort, titleQuery: string | undefined): string {
+  const params = new URLSearchParams();
+
+  if (titleQuery) {
+    params.set("title", titleQuery);
+  }
+
+  if (sort === "votes") {
+    params.set("sort", "votes");
+  }
+
+  const query = params.toString();
+
+  return query ? `/?${query}` : "/";
 }
 
 function SortLink({

@@ -1,11 +1,16 @@
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import HomeEmptyState from "@/components/HomeEmptyState";
+import HomeMovieTitleSearch from "@/components/HomeMovieTitleSearch";
 import HomeSortControls from "@/components/HomeSortControls";
 import VideoCard from "@/components/VideoCard";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { UPVOTE_COOLDOWN_MS } from "@/lib/votes/persist";
-import { listHomeVideos, normalizeHomeSort } from "@/lib/videos/list-home-videos";
+import {
+  listHomeVideos,
+  normalizeHomeSort,
+  normalizeTitleQuery,
+} from "@/lib/videos/list-home-videos";
 import {
   ANONYMOUS_VOTER_COOKIE_NAME,
   hashAnonymousVoterId,
@@ -21,11 +26,12 @@ export default async function Home({
 }) {
   const resolvedSearchParams = await searchParams;
   const sort = normalizeHomeSort(resolvedSearchParams.sort);
+  const titleQuery = normalizeTitleQuery(resolvedSearchParams.title);
   const cookieStore = await cookies();
   const currentUser = await getCurrentUser();
   const videos = await listHomeVideos(db, {
     sort,
-    titleQuery: resolvedSearchParams.title,
+    titleQuery,
   });
   const nextEligibleUpvoteAtByVideoId = await getNextEligibleUpvoteAtByVideoId(
     cookieStore,
@@ -39,7 +45,8 @@ export default async function Home({
           The best parts of movies
         </h1>
       </div>
-      <HomeSortControls sort={sort} />
+      <HomeMovieTitleSearch sort={sort} titleQuery={titleQuery} />
+      <HomeSortControls sort={sort} titleQuery={titleQuery} />
 
       {videos.length === 0 ? (
         <HomeEmptyState canSubmit={Boolean(currentUser)} />

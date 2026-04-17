@@ -34,4 +34,17 @@ describe("HomeSortControls", () => {
       "aria-current"
     );
   });
+
+  it("preserves the active title query in both sort links", () => {
+    render(<HomeSortControls sort="date" titleQuery="alien" />);
+
+    expect(screen.getByRole("link", { name: "Newest" })).toHaveAttribute(
+      "href",
+      "/?title=alien"
+    );
+    expect(screen.getByRole("link", { name: "Top voted" })).toHaveAttribute(
+      "href",
+      "/?title=alien&sort=votes"
+    );
+  });
 });
