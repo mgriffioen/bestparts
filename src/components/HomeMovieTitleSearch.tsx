@@ -40,7 +40,7 @@ export default function HomeMovieTitleSearch({
             name="title"
             type="search"
             defaultValue={titleQuery ?? ""}
-            placeholder="Movie title"
+            placeholder="Search Movies"
             onInput={handleInput}
             className="h-11 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-4 pt-2 pb-3 text-white placeholder-neutral-500 focus:border-yellow-400 focus:outline-none transition-colors"
           />
