@@ -25,9 +25,12 @@ describe("HomeMovieTitleSearch", () => {
   it("reflects the current title query", () => {
     render(<HomeMovieTitleSearch sort="votes" titleQuery="alien" />);
 
-    expect(
-      screen.getByRole("searchbox", { name: "Search movie titles" })
-    ).toHaveValue("alien");
+    const searchbox = screen.getByRole("searchbox", {
+      name: "Search movie titles",
+    });
+
+    expect(searchbox).toHaveValue("alien");
+    expect(searchbox).toHaveAttribute("placeholder", "SEARCH MOVIES...");
     expect(screen.queryByRole("button", { name: "Search" })).not.toBeInTheDocument();
   });
 

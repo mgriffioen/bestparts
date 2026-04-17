@@ -58,7 +58,7 @@ export default function HomeMovieTitleSearch({
         name="title"
         type="search"
         value={value}
-        placeholder="Movie title"
+        placeholder="Search Movies"
         onChange={(event) => handleChange(event.currentTarget.value)}
         className="h-11 min-w-0 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-4 pt-2 pb-3 text-white placeholder-neutral-500 transition-colors focus:border-yellow-400 focus:outline-none"
       />
