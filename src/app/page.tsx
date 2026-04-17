@@ -1,8 +1,7 @@
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
+import HomeBrowseToolbar from "@/components/HomeBrowseToolbar";
 import HomeEmptyState from "@/components/HomeEmptyState";
-import HomeMovieTitleSearch from "@/components/HomeMovieTitleSearch";
-import HomeSortControls from "@/components/HomeSortControls";
 import VideoCard from "@/components/VideoCard";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { UPVOTE_COOLDOWN_MS } from "@/lib/votes/persist";
@@ -46,12 +45,10 @@ export default async function Home({
           The best parts of movies
         </h1>
       </div>
-      <HomeMovieTitleSearch
-        key={`${sort}:${titleQuery ?? ""}`}
+      <HomeBrowseToolbar
         sort={sort}
         titleQuery={titleQuery}
       />
-      <HomeSortControls sort={sort} titleQuery={titleQuery} />
 
       {videos.length === 0 ? (
         <HomeEmptyState

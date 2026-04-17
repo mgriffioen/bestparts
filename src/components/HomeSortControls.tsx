@@ -11,7 +11,7 @@ export default function HomeSortControls({
   return (
     <nav
       aria-label="Sort videos"
-      className="mb-6 flex items-center gap-2 text-sm"
+      className="flex items-center gap-2 text-sm"
     >
       <SortLink
         href={buildSortHref("date", titleQuery)}

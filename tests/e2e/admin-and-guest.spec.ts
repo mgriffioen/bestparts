@@ -170,6 +170,43 @@ test.describe("browser auth and admin flows", () => {
     );
   });
 
+  test("homepage browse toolbar keeps the search box inline, capped, and shrinkable", async ({
+    page,
+  }) => {
+    await seedGuestMovieTitleSearchScenario(prisma);
+
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto("/");
+
+    const sortControls = page.getByRole("navigation", { name: "Sort videos" });
+    const searchBox = page.getByRole("searchbox", { name: "Search movie titles" });
+    const desktopSortBox = await sortControls.boundingBox();
+    const desktopSearchBox = await searchBox.boundingBox();
+
+    expect(desktopSortBox).not.toBeNull();
+    expect(desktopSearchBox).not.toBeNull();
+
+    expect(desktopSearchBox!.x).toBeGreaterThanOrEqual(
+      desktopSortBox!.x + desktopSortBox!.width
+    );
+    expect(desktopSearchBox!.width).toBeLessThanOrEqual(512);
+
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.reload();
+
+    const narrowSortBox = await sortControls.boundingBox();
+    const narrowSearchBox = await searchBox.boundingBox();
+
+    expect(narrowSortBox).not.toBeNull();
+    expect(narrowSearchBox).not.toBeNull();
+
+    expect(narrowSearchBox!.x).toBeGreaterThanOrEqual(
+      narrowSortBox!.x + narrowSortBox!.width
+    );
+    expect(narrowSearchBox!.width).toBeLessThan(desktopSearchBox!.width);
+    expect(narrowSearchBox!.x + narrowSearchBox!.width).toBeLessThanOrEqual(360);
+  });
+
   test("an authenticated admin can create a user and copy a setup URL", async ({
     page,
     context,

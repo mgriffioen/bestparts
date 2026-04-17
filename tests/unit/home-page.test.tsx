@@ -64,14 +64,18 @@ vi.mock("@/components/HomeEmptyState", () => ({
   ),
 }));
 
-vi.mock("@/components/HomeSortControls", () => ({
-  default: ({ sort }: { sort: "votes" | "date" }) => (
-    <div data-testid="home-sort-controls">{sort}</div>
+vi.mock("@/components/HomeBrowseToolbar", () => ({
+  default: ({
+    sort,
+    titleQuery,
+  }: {
+    sort: "votes" | "date";
+    titleQuery?: string;
+  }) => (
+    <div data-testid="home-browse-toolbar">
+      {sort}|{titleQuery ?? ""}
+    </div>
   ),
-}));
-
-vi.mock("@/components/HomeMovieTitleSearch", () => ({
-  default: () => <div data-testid="home-movie-title-search" />,
 }));
 
 vi.mock("@/components/VideoCard", () => ({
@@ -133,7 +137,7 @@ describe("Home page", () => {
     expect(
       screen.getAllByTestId("video-card").map((card) => card.textContent)
     ).toEqual(["Higher votes", "Lower votes"]);
-    expect(screen.getByTestId("home-sort-controls")).toHaveTextContent("date");
+    expect(screen.getByTestId("home-browse-toolbar")).toHaveTextContent("date|");
   });
 
   it("supports newest ordering via the sort query param", async () => {
@@ -164,7 +168,7 @@ describe("Home page", () => {
     expect(
       screen.getAllByTestId("video-card").map((card) => card.textContent)
     ).toEqual(["Newest scene", "Older scene"]);
-    expect(screen.getByTestId("home-sort-controls")).toHaveTextContent("date");
+    expect(screen.getByTestId("home-browse-toolbar")).toHaveTextContent("date|");
   });
 
   it("filters videos by movie title using a case-insensitive free-text query", async () => {
@@ -201,7 +205,9 @@ describe("Home page", () => {
     expect(
       screen.getAllByTestId("video-card").map((card) => card.textContent)
     ).toEqual(["Chestburster", "Power loader"]);
-    expect(screen.getByTestId("home-sort-controls")).toHaveTextContent("date");
+    expect(screen.getByTestId("home-browse-toolbar")).toHaveTextContent(
+      "date|alien"
+    );
   });
 
   it("ignores a whitespace-only movie title query", async () => {
@@ -257,7 +263,9 @@ describe("Home page", () => {
       },
       orderBy: TOP_VOTED_ORDER_BY,
     });
-    expect(screen.getByTestId("home-sort-controls")).toHaveTextContent("votes");
+    expect(screen.getByTestId("home-browse-toolbar")).toHaveTextContent(
+      "votes|ali"
+    );
   });
 
   it("keeps cooldown lookup scoped to the filtered search results", async () => {

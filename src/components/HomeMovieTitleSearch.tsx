@@ -49,21 +49,19 @@ export default function HomeMovieTitleSearch({
   }
 
   return (
-    <div className="mb-6 pt-1">
-      <div className="w-full max-w-lg">
-        <label htmlFor="movie-title-search" className="sr-only">
-          Search movie titles
-        </label>
-        <input
-          id="movie-title-search"
-          name="title"
-          type="search"
-          value={value}
-          placeholder="Movie title"
-          onChange={(event) => handleChange(event.currentTarget.value)}
-          className="h-11 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-4 pt-2 pb-3 text-white placeholder-neutral-500 focus:border-yellow-400 focus:outline-none transition-colors"
-        />
-      </div>
+    <div className="min-w-0 w-full">
+      <label htmlFor="movie-title-search" className="sr-only">
+        Search movie titles
+      </label>
+      <input
+        id="movie-title-search"
+        name="title"
+        type="search"
+        value={value}
+        placeholder="Movie title"
+        onChange={(event) => handleChange(event.currentTarget.value)}
+        className="h-11 min-w-0 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-4 pt-2 pb-3 text-white placeholder-neutral-500 transition-colors focus:border-yellow-400 focus:outline-none"
+      />
     </div>
   );
 }
