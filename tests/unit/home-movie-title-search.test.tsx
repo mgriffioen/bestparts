@@ -30,7 +30,7 @@ describe("HomeMovieTitleSearch", () => {
     });
 
     expect(searchbox).toHaveValue("alien");
-    expect(searchbox).toHaveAttribute("placeholder", "SEARCH MOVIES...");
+    expect(searchbox).toHaveAttribute("placeholder", "Search Movies");
     expect(screen.queryByRole("button", { name: "Search" })).not.toBeInTheDocument();
   });
 
