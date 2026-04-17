@@ -27,6 +27,7 @@ export default async function Home({
   const resolvedSearchParams = await searchParams;
   const sort = normalizeHomeSort(resolvedSearchParams.sort);
   const titleQuery = normalizeTitleQuery(resolvedSearchParams.title);
+  const clearSearchHref = sort === "votes" ? "/?sort=votes" : "/";
   const cookieStore = await cookies();
   const currentUser = await getCurrentUser();
   const videos = await listHomeVideos(db, {
@@ -45,11 +46,19 @@ export default async function Home({
           The best parts of movies
         </h1>
       </div>
-      <HomeMovieTitleSearch sort={sort} titleQuery={titleQuery} />
+      <HomeMovieTitleSearch
+        sort={sort}
+        titleQuery={titleQuery}
+        showClearLink={Boolean(titleQuery) && videos.length > 0}
+      />
       <HomeSortControls sort={sort} titleQuery={titleQuery} />
 
       {videos.length === 0 ? (
-        <HomeEmptyState canSubmit={Boolean(currentUser)} />
+        <HomeEmptyState
+          canSubmit={Boolean(currentUser)}
+          titleQuery={titleQuery}
+          clearSearchHref={clearSearchHref}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {videos.map((video) => (

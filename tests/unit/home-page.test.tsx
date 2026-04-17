@@ -45,8 +45,22 @@ vi.mock("@/lib/db", () => ({
 }));
 
 vi.mock("@/components/HomeEmptyState", () => ({
-  default: ({ canSubmit }: { canSubmit: boolean }) => (
-    <div>{canSubmit ? "can submit" : "guest empty state"}</div>
+  default: ({
+    canSubmit,
+    titleQuery,
+    clearSearchHref,
+  }: {
+    canSubmit: boolean;
+    titleQuery?: string;
+    clearSearchHref?: string;
+  }) => (
+    <div>
+      {titleQuery
+        ? `no results for ${titleQuery}|${clearSearchHref}`
+        : canSubmit
+          ? "can submit"
+          : "guest empty state"}
+    </div>
   ),
 }));
 
@@ -305,6 +319,31 @@ describe("Home page", () => {
     ).toEqual([
       `Cooling down|${new Date(latestVoteAt.getTime() + UPVOTE_COOLDOWN_MS).toISOString()}`,
     ]);
+  });
+
+  it("shows a search-specific empty state when no movie titles match", async () => {
+    mocks.findVideos.mockResolvedValue([]);
+
+    render(
+      await Home({
+        searchParams: Promise.resolve({ sort: "votes", title: "alien" }),
+      })
+    );
+
+    expect(screen.getByText("no results for alien|/?sort=votes")).toBeInTheDocument();
+    expect(mocks.findVideoUpvotes).not.toHaveBeenCalled();
+  });
+
+  it("keeps the default empty state when there is no active title query", async () => {
+    mocks.findVideos.mockResolvedValue([]);
+
+    render(
+      await Home({
+        searchParams: Promise.resolve({}),
+      })
+    );
+
+    expect(screen.getByText("guest empty state")).toBeInTheDocument();
   });
 });
 

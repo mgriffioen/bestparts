@@ -4,6 +4,7 @@ import {
   createE2EPrismaClient,
   resetE2EDatabase,
   seedAdminSession,
+  seedGuestMovieTitleSearchScenario,
   seedGuestVideo,
   seedGuestSortScenario,
 } from "../setup/e2e-db";
@@ -125,6 +126,50 @@ test.describe("browser auth and admin flows", () => {
       })
     ).toBeDisabled();
     await expect(reloadedTopCard.getByText("2", { exact: true })).toBeVisible();
+  });
+
+  test("guest movie title search preserves sort state and shows a search-specific empty state", async ({
+    page,
+  }) => {
+    await seedGuestMovieTitleSearchScenario(prisma);
+
+    await page.goto("/");
+
+    await page.getByRole("searchbox", { name: "Search movie titles" }).fill("ali");
+    await page.getByRole("button", { name: "Search" }).click();
+
+    await expect(page).toHaveURL(/\/\?title=ali$/);
+    await expect.poll(() => getSceneTitleOrder(page)).toEqual([
+      "Power loader showdown",
+      "Air shaft hunt",
+    ]);
+
+    await page.getByRole("link", { name: "Top voted" }).click();
+
+    await expect(page).toHaveURL(/\/\?title=ali&sort=votes$/);
+    await expect.poll(() => getSceneTitleOrder(page)).toEqual([
+      "Power loader showdown",
+      "Air shaft hunt",
+    ]);
+
+    await page.getByRole("link", { name: "Clear search" }).click();
+
+    await expect(page).toHaveURL(/\/\?sort=votes$/);
+    await expect.poll(() => getSceneTitleOrder(page)).toEqual([
+      "Power loader showdown",
+      "Coffee shop faceoff",
+      "Air shaft hunt",
+    ]);
+
+    await page.getByRole("searchbox", { name: "Search movie titles" }).fill("NOPE");
+    await page.getByRole("button", { name: "Search" }).click();
+
+    await expect(page).toHaveURL(/\/\?sort=votes&title=NOPE$/);
+    await expect(page.getByText('No movie titles match "NOPE"')).toBeVisible();
+    await expect(page.getByRole("link", { name: "Clear search" })).toHaveAttribute(
+      "href",
+      "/?sort=votes"
+    );
   });
 
   test("an authenticated admin can create a user and copy a setup URL", async ({

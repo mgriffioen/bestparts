@@ -4,9 +4,11 @@ import type { HomeSort } from "@/lib/videos/list-home-videos";
 export default function HomeMovieTitleSearch({
   sort,
   titleQuery,
+  showClearLink = Boolean(titleQuery),
 }: {
   sort: HomeSort;
   titleQuery?: string;
+  showClearLink?: boolean;
 }) {
   const clearSearchHref = buildClearSearchHref(sort);
 
@@ -37,7 +39,7 @@ export default function HomeMovieTitleSearch({
         </button>
       </form>
 
-      {titleQuery ? (
+      {titleQuery && showClearLink ? (
         <Link
           href={clearSearchHref}
           className="text-sm text-neutral-400 transition-colors hover:text-white"

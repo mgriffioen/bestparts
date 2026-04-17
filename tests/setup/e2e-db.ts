@@ -42,6 +42,8 @@ export async function seedGuestVideo(prisma: PrismaClient): Promise<void> {
 }
 
 export async function seedGuestSortScenario(prisma: PrismaClient): Promise<void> {
+  const now = Date.now();
+
   await prisma.video.createMany({
     data: [
       {
@@ -49,7 +51,7 @@ export async function seedGuestSortScenario(prisma: PrismaClient): Promise<void>
         movieTitle: "Heat",
         sceneTitle: "Already top voted",
         description: "The current leader.",
-        submittedAt: new Date("2026-04-03T20:00:00.000Z"),
+        submittedAt: new Date(now - 120_000),
         upvoteCount: 2,
       },
       {
@@ -57,8 +59,43 @@ export async function seedGuestSortScenario(prisma: PrismaClient): Promise<void>
         movieTitle: "Arrival",
         sceneTitle: "Almost top voted",
         description: "One vote behind.",
-        submittedAt: new Date("2026-04-04T20:00:00.000Z"),
+        submittedAt: new Date(now - 60_000),
         upvoteCount: 1,
+      },
+    ],
+  });
+}
+
+export async function seedGuestMovieTitleSearchScenario(
+  prisma: PrismaClient
+): Promise<void> {
+  const now = Date.now();
+
+  await prisma.video.createMany({
+    data: [
+      {
+        youtubeId: "alienclip01",
+        movieTitle: "Alien",
+        sceneTitle: "Air shaft hunt",
+        description: "Tension in the vents.",
+        submittedAt: new Date(now - 180_000),
+        upvoteCount: 3,
+      },
+      {
+        youtubeId: "aliensclip2",
+        movieTitle: "Aliens",
+        sceneTitle: "Power loader showdown",
+        description: "Ripley steps in.",
+        submittedAt: new Date(now - 60_000),
+        upvoteCount: 7,
+      },
+      {
+        youtubeId: "heatclip003",
+        movieTitle: "Heat",
+        sceneTitle: "Coffee shop faceoff",
+        description: "De Niro and Pacino talk.",
+        submittedAt: new Date(now - 30_000),
+        upvoteCount: 5,
       },
     ],
   });
