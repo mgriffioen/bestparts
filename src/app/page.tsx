@@ -41,7 +41,7 @@ export default async function Home({
 
   return (
     <div>
-      <div className="mb-10">
+      <div className="mb-7">
         <h1 className="text-3xl font-black text-white mb-2">
           The best parts of movies
         </h1>

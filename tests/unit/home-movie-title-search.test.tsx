@@ -1,8 +1,12 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import HomeMovieTitleSearch from "@/components/HomeMovieTitleSearch";
 
 describe("HomeMovieTitleSearch", () => {
+  beforeEach(() => {
+    HTMLFormElement.prototype.requestSubmit = vi.fn();
+  });
+
   it("reflects the current title query and preserves top-voted sorting on submit", () => {
     const { container } = render(
       <HomeMovieTitleSearch sort="votes" titleQuery="alien" />
@@ -37,5 +41,15 @@ describe("HomeMovieTitleSearch", () => {
       "href",
       "/?sort=votes"
     );
+  });
+
+  it("auto-submits when an active search is cleared from the input", () => {
+    render(<HomeMovieTitleSearch sort="votes" titleQuery="alien" />);
+
+    fireEvent.input(screen.getByRole("searchbox", { name: "Search movie titles" }), {
+      target: { value: "" },
+    });
+
+    expect(HTMLFormElement.prototype.requestSubmit).toHaveBeenCalledTimes(1);
   });
 });
