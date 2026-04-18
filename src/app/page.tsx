@@ -1,11 +1,15 @@
-import type { Prisma } from "@prisma/client";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
+import HomeBrowseToolbar from "@/components/HomeBrowseToolbar";
 import HomeEmptyState from "@/components/HomeEmptyState";
-import HomeSortControls, { type HomeSort } from "@/components/HomeSortControls";
 import VideoCard from "@/components/VideoCard";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { UPVOTE_COOLDOWN_MS } from "@/lib/votes/persist";
+import {
+  listHomeVideos,
+  normalizeHomeSort,
+  normalizeTitleQuery,
+} from "@/lib/videos/list-home-videos";
 import {
   ANONYMOUS_VOTER_COOKIE_NAME,
   hashAnonymousVoterId,
@@ -14,35 +18,20 @@ import {
 
 export const dynamic = "force-dynamic";
 
-function normalizeHomeSort(sort: string | undefined): HomeSort {
-  return sort === "votes" ? "votes" : "date";
-}
-
-function getHomePageOrderBy(sort: HomeSort): Prisma.VideoOrderByWithRelationInput[] {
-  return sort === "date"
-    ? [
-        { submittedAt: "desc" },
-        { upvoteCount: "desc" },
-        { id: "desc" },
-      ]
-    : [
-        { upvoteCount: "desc" },
-        { submittedAt: "desc" },
-        { id: "desc" },
-      ];
-}
-
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ sort?: string }>;
+  searchParams: Promise<{ sort?: string; title?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
   const sort = normalizeHomeSort(resolvedSearchParams.sort);
+  const titleQuery = normalizeTitleQuery(resolvedSearchParams.title);
+  const clearSearchHref = sort === "votes" ? "/?sort=votes" : "/";
   const cookieStore = await cookies();
   const currentUser = await getCurrentUser();
-  const videos = await db.video.findMany({
-    orderBy: getHomePageOrderBy(sort),
+  const videos = await listHomeVideos(db, {
+    sort,
+    titleQuery,
   });
   const nextEligibleUpvoteAtByVideoId = await getNextEligibleUpvoteAtByVideoId(
     cookieStore,
@@ -51,15 +40,22 @@ export default async function Home({
 
   return (
     <div>
-      <div className="mb-10">
+      <div className="mb-7">
         <h1 className="text-3xl font-black text-white mb-2">
           The best parts of movies
         </h1>
       </div>
-      <HomeSortControls sort={sort} />
+      <HomeBrowseToolbar
+        sort={sort}
+        titleQuery={titleQuery}
+      />
 
       {videos.length === 0 ? (
-        <HomeEmptyState canSubmit={Boolean(currentUser)} />
+        <HomeEmptyState
+          canSubmit={Boolean(currentUser)}
+          titleQuery={titleQuery}
+          clearSearchHref={clearSearchHref}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {videos.map((video) => (

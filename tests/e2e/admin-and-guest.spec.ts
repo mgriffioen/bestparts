@@ -4,6 +4,7 @@ import {
   createE2EPrismaClient,
   resetE2EDatabase,
   seedAdminSession,
+  seedGuestMovieTitleSearchScenario,
   seedGuestVideo,
   seedGuestSortScenario,
 } from "../setup/e2e-db";
@@ -125,6 +126,85 @@ test.describe("browser auth and admin flows", () => {
       })
     ).toBeDisabled();
     await expect(reloadedTopCard.getByText("2", { exact: true })).toBeVisible();
+  });
+
+  test("guest movie title search preserves sort state and shows a search-specific empty state", async ({
+    page,
+  }) => {
+    await seedGuestMovieTitleSearchScenario(prisma);
+
+    await page.goto("/");
+
+    await page.getByRole("searchbox", { name: "Search movie titles" }).fill("ali");
+
+    await expect(page).toHaveURL(/\/\?title=ali$/);
+    await expect.poll(() => getSceneTitleOrder(page)).toEqual([
+      "Power loader showdown",
+      "Air shaft hunt",
+    ]);
+
+    await page.getByRole("link", { name: "Top voted" }).click();
+
+    await expect(page).toHaveURL(/\/\?title=ali&sort=votes$/);
+    await expect.poll(() => getSceneTitleOrder(page)).toEqual([
+      "Power loader showdown",
+      "Air shaft hunt",
+    ]);
+
+    await page.getByRole('searchbox', { name: 'Search movie titles' }).clear();
+
+    await expect(page).toHaveURL(/\/\?sort=votes$/);
+    await expect.poll(() => getSceneTitleOrder(page)).toEqual([
+      "Power loader showdown",
+      "Coffee shop faceoff",
+      "Air shaft hunt",
+    ]);
+
+    await page.getByRole("searchbox", { name: "Search movie titles" }).fill("NOPE");
+
+    await expect(page).toHaveURL(/\/\?title=NOPE&sort=votes$/);
+    await expect(page.getByText('No movie titles match "NOPE"')).toBeVisible();
+    await expect(page.getByRole("link", { name: "Clear search" })).toHaveAttribute(
+      "href",
+      "/?sort=votes"
+    );
+  });
+
+  test("homepage browse toolbar keeps the search box inline, capped, and shrinkable", async ({
+    page,
+  }) => {
+    await seedGuestMovieTitleSearchScenario(prisma);
+
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto("/");
+
+    const sortControls = page.getByRole("navigation", { name: "Sort videos" });
+    const searchBox = page.getByRole("searchbox", { name: "Search movie titles" });
+    const desktopSortBox = await sortControls.boundingBox();
+    const desktopSearchBox = await searchBox.boundingBox();
+
+    expect(desktopSortBox).not.toBeNull();
+    expect(desktopSearchBox).not.toBeNull();
+
+    expect(desktopSearchBox!.x).toBeGreaterThanOrEqual(
+      desktopSortBox!.x + desktopSortBox!.width
+    );
+    expect(desktopSearchBox!.width).toBeLessThanOrEqual(512);
+
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.reload();
+
+    const narrowSortBox = await sortControls.boundingBox();
+    const narrowSearchBox = await searchBox.boundingBox();
+
+    expect(narrowSortBox).not.toBeNull();
+    expect(narrowSearchBox).not.toBeNull();
+
+    expect(narrowSearchBox!.x).toBeGreaterThanOrEqual(
+      narrowSortBox!.x + narrowSortBox!.width
+    );
+    expect(narrowSearchBox!.width).toBeLessThan(desktopSearchBox!.width);
+    expect(narrowSearchBox!.x + narrowSearchBox!.width).toBeLessThanOrEqual(360);
   });
 
   test("an authenticated admin can create a user and copy a setup URL", async ({
