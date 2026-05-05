@@ -7,6 +7,7 @@ import { getThumbnailUrl } from "@/lib/youtube";
 import VideoModal from "./VideoModal";
 import EditModal from "./EditModal";
 import UpvoteButton from "./UpvoteButton";
+import ShareButton from "./ShareButton";
 
 interface VideoCardProps {
   id: number;
@@ -106,11 +107,14 @@ export default function VideoCard({
           <div className="mt-auto pt-3">
             <div className="flex items-center justify-between gap-3">
               <p className="text-neutral-600 text-xs">{formattedDate}</p>
-              <UpvoteButton
-                videoId={id}
-                upvoteCount={upvoteCount}
-                nextEligibleUpvoteAt={nextEligibleUpvoteAt}
-              />
+              <div className="flex items-center gap-3">
+                <ShareButton videoId={id} />
+                <UpvoteButton
+                  videoId={id}
+                  upvoteCount={upvoteCount}
+                  nextEligibleUpvoteAt={nextEligibleUpvoteAt}
+                />
+              </div>
             </div>
             {canManage && (
               <div className="mt-3 flex gap-2">
@@ -138,6 +142,7 @@ export default function VideoCard({
 
       {open && (
         <VideoModal
+          id={id}
           youtubeId={youtubeId}
           movieTitle={movieTitle}
           sceneTitle={sceneTitle}

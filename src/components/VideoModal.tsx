@@ -2,8 +2,10 @@
 
 import { useEffect } from "react";
 import { getEmbedUrl } from "@/lib/youtube";
+import ShareButton from "./ShareButton";
 
 interface VideoModalProps {
+  id: number;
   youtubeId: string;
   movieTitle: string;
   sceneTitle: string;
@@ -11,6 +13,7 @@ interface VideoModalProps {
 }
 
 export default function VideoModal({
+  id,
   youtubeId,
   movieTitle,
   sceneTitle,
@@ -46,15 +49,18 @@ export default function VideoModal({
               {sceneTitle}
             </h2>
           </div>
-          <button
-            onClick={onClose}
-            className="ml-4 text-neutral-400 hover:text-white transition-colors shrink-0"
-            aria-label="Close"
-          >
+          <div className="flex items-center gap-4 ml-4 shrink-0">
+            <ShareButton videoId={id} />
+            <button
+              onClick={onClose}
+              className="text-neutral-400 hover:text-white transition-colors"
+              aria-label="Close"
+            >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
               <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
             </svg>
-          </button>
+            </button>
+          </div>
         </div>
 
         <div className="relative aspect-video bg-neutral-900 rounded-xl overflow-hidden shadow-2xl">
