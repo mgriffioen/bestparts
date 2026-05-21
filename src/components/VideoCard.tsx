@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getThumbnailUrl } from "@/lib/youtube";
+import { formatMovieCredit } from "@/lib/format-movie-credit";
 import VideoModal from "./VideoModal";
 import EditModal from "./EditModal";
 import UpvoteButton from "./UpvoteButton";
@@ -13,6 +14,7 @@ interface VideoCardProps {
   id: number;
   youtubeId: string;
   movieTitle: string;
+  director: string | null;
   sceneTitle: string;
   description: string | null;
   submittedAt: Date;
@@ -25,6 +27,7 @@ export default function VideoCard({
   id,
   youtubeId,
   movieTitle,
+  director,
   sceneTitle,
   description,
   submittedAt,
@@ -94,7 +97,7 @@ export default function VideoCard({
 
         <div className="p-4 flex flex-col flex-1">
           <p className="text-xs text-yellow-400 font-semibold uppercase tracking-wider mb-1">
-            {movieTitle}
+            {formatMovieCredit(movieTitle, director)}
           </p>
           <h2 className="font-bold text-white text-lg leading-snug mb-2">
             {sceneTitle}
@@ -145,6 +148,7 @@ export default function VideoCard({
           id={id}
           youtubeId={youtubeId}
           movieTitle={movieTitle}
+          director={director}
           sceneTitle={sceneTitle}
           onClose={() => setOpen(false)}
         />
@@ -154,6 +158,7 @@ export default function VideoCard({
         <EditModal
           id={id}
           movieTitle={movieTitle}
+          director={director}
           sceneTitle={sceneTitle}
           description={description}
           onClose={() => setEditing(false)}

@@ -10,6 +10,7 @@ export default function SubmitSceneForm() {
   const [form, setForm] = useState({
     youtubeUrl: "",
     movieTitle: "",
+    director: "",
     sceneTitle: "",
     description: "",
   });
@@ -81,7 +82,29 @@ export default function SubmitSceneForm() {
         <MovieTitleInput
           value={form.movieTitle}
           onChange={(val) => setForm((prev) => ({ ...prev, movieTitle: val }))}
+          onDirectorFetch={(director) =>
+            setForm((prev) => ({ ...prev, director: director ?? "" }))
+          }
           required
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="director"
+          className="block text-sm font-medium text-neutral-300 mb-1.5"
+        >
+          Director{" "}
+          <span className="text-neutral-600">(auto-filled from title)</span>
+        </label>
+        <input
+          id="director"
+          name="director"
+          type="text"
+          placeholder="e.g. Steven Spielberg"
+          value={form.director}
+          onChange={handleChange}
+          className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-2.5 text-white placeholder-neutral-600 focus:outline-none focus:border-yellow-400 transition-colors"
         />
       </div>
 

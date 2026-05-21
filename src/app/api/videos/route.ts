@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { youtubeUrl, movieTitle, sceneTitle, description } = body;
+  const { youtubeUrl, movieTitle, director, sceneTitle, description } = body;
 
   if (!youtubeUrl || !movieTitle || !sceneTitle) {
     return NextResponse.json(
@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
     data: {
       youtubeId,
       movieTitle: String(movieTitle).trim(),
+      director: director ? String(director).trim() : null,
       sceneTitle: String(sceneTitle).trim(),
       description: description ? String(description).trim() : null,
       submittedByUserId: currentUser.id,

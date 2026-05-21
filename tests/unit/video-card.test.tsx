@@ -60,6 +60,7 @@ const baseProps = {
   id: 1,
   youtubeId: "abc123def45",
   movieTitle: "Heat",
+  director: "Michael Mann",
   sceneTitle: "Downtown shootout",
   description: "Chaos on the street.",
   submittedAt: new Date("2026-04-04T20:00:00.000Z"),

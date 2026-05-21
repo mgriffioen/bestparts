@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { getEmbedUrl } from "@/lib/youtube";
+import { formatMovieCredit } from "@/lib/format-movie-credit";
 import UpvoteButton from "@/components/UpvoteButton";
 import ShareButton from "@/components/ShareButton";
 import { UPVOTE_COOLDOWN_MS } from "@/lib/votes/persist";
@@ -83,7 +84,7 @@ export default async function VideoPage({
       </Link>
 
       <p className="text-xs text-yellow-400 font-semibold uppercase tracking-wider mb-1">
-        {video.movieTitle}
+        {formatMovieCredit(video.movieTitle, video.director)}
       </p>
       <h1 className="text-2xl font-black text-white mb-5">{video.sceneTitle}</h1>
 

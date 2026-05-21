@@ -34,7 +34,7 @@ export async function PATCH(
   }
 
   const body = await req.json();
-  const { movieTitle, sceneTitle, description } = body;
+  const { movieTitle, director, sceneTitle, description } = body;
 
   if (!movieTitle || !sceneTitle) {
     return NextResponse.json(
@@ -47,6 +47,7 @@ export async function PATCH(
     where: { id: videoId },
     data: {
       movieTitle: String(movieTitle).trim(),
+      director: director ? String(director).trim() : null,
       sceneTitle: String(sceneTitle).trim(),
       description: description ? String(description).trim() : null,
     },

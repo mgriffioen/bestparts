@@ -2,14 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 
+interface Suggestion {
+  label: string;
+  tmdbId: number;
+}
+
 interface MovieTitleInputProps {
   value: string;
   onChange: (value: string) => void;
+  onDirectorFetch?: (director: string | null) => void;
   required?: boolean;
 }
 
-export default function MovieTitleInput({ value, onChange, required }: MovieTitleInputProps) {
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+export default function MovieTitleInput({ value, onChange, onDirectorFetch, required }: MovieTitleInputProps) {
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -34,7 +40,7 @@ export default function MovieTitleInput({ value, onChange, required }: MovieTitl
         }
 
         const data = await res.json();
-        const nextSuggestions = Array.isArray(data) ? data : [];
+        const nextSuggestions: Suggestion[] = Array.isArray(data) ? data : [];
 
         setSuggestions(nextSuggestions);
         setOpen(nextSuggestions.length > 0);
@@ -76,10 +82,20 @@ export default function MovieTitleInput({ value, onChange, required }: MovieTitl
     }
   }
 
-  function select(title: string) {
-    onChange(title);
+  async function select(suggestion: Suggestion) {
+    onChange(suggestion.label);
     setOpen(false);
     setSuggestions([]);
+
+    if (onDirectorFetch) {
+      try {
+        const res = await fetch(`/api/tmdb/credits?id=${suggestion.tmdbId}`);
+        const data = res.ok ? await res.json() : { director: null };
+        onDirectorFetch(data.director ?? null);
+      } catch {
+        onDirectorFetch(null);
+      }
+    }
   }
 
   return (
@@ -99,10 +115,10 @@ export default function MovieTitleInput({ value, onChange, required }: MovieTitl
       />
       {showSuggestions && (
         <ul className="absolute z-20 w-full mt-1 bg-neutral-800 border border-neutral-700 rounded-lg overflow-hidden shadow-xl">
-          {suggestions.map((title, i) => (
+          {suggestions.map((suggestion, i) => (
             <li
-              key={title}
-              onMouseDown={() => select(title)}
+              key={suggestion.tmdbId}
+              onMouseDown={() => select(suggestion)}
               onMouseEnter={() => setActiveIndex(i)}
               className={`px-4 py-2.5 text-sm cursor-pointer transition-colors ${
                 i === activeIndex
@@ -110,7 +126,7 @@ export default function MovieTitleInput({ value, onChange, required }: MovieTitl
                   : "text-neutral-200 hover:bg-neutral-700"
               }`}
             >
-              {title}
+              {suggestion.label}
             </li>
           ))}
         </ul>

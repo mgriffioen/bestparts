@@ -2,12 +2,14 @@
 
 import { useEffect } from "react";
 import { getEmbedUrl } from "@/lib/youtube";
+import { formatMovieCredit } from "@/lib/format-movie-credit";
 import ShareButton from "./ShareButton";
 
 interface VideoModalProps {
   id: number;
   youtubeId: string;
   movieTitle: string;
+  director: string | null;
   sceneTitle: string;
   onClose: () => void;
 }
@@ -16,6 +18,7 @@ export default function VideoModal({
   id,
   youtubeId,
   movieTitle,
+  director,
   sceneTitle,
   onClose,
 }: VideoModalProps) {
@@ -43,7 +46,7 @@ export default function VideoModal({
         <div className="flex items-start justify-between mb-3">
           <div>
             <p className="text-xs text-yellow-400 font-semibold uppercase tracking-wider">
-              {movieTitle}
+              {formatMovieCredit(movieTitle, director)}
             </p>
             <h2 className="text-white font-bold text-lg leading-snug">
               {sceneTitle}
