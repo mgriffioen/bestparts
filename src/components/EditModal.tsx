@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import MovieTitleInput from "@/components/MovieTitleInput";
 
 interface EditModalProps {
   id: number;
   movieTitle: string;
+  director: string | null;
   sceneTitle: string;
   description: string | null;
   onClose: () => void;
@@ -14,12 +16,18 @@ interface EditModalProps {
 export default function EditModal({
   id,
   movieTitle,
+  director,
   sceneTitle,
   description,
   onClose,
 }: EditModalProps) {
   const router = useRouter();
-  const [form, setForm] = useState({ movieTitle, sceneTitle, description: description ?? "" });
+  const [form, setForm] = useState({
+    movieTitle,
+    director: director ?? "",
+    sceneTitle,
+    description: description ?? "",
+  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,14 +94,26 @@ export default function EditModal({
             <label htmlFor="edit-movieTitle" className="block text-sm font-medium text-neutral-300 mb-1.5">
               Movie title <span className="text-red-400">*</span>
             </label>
-            <input
-              id="edit-movieTitle"
-              name="movieTitle"
-              type="text"
-              required
+            <MovieTitleInput
               value={form.movieTitle}
+              onChange={(val) => setForm((prev) => ({ ...prev, movieTitle: val }))}
+              onDirectorFetch={(d) => setForm((prev) => ({ ...prev, director: d ?? prev.director }))}
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="edit-director" className="block text-sm font-medium text-neutral-300 mb-1.5">
+              Director
+            </label>
+            <input
+              id="edit-director"
+              name="director"
+              type="text"
+              value={form.director}
               onChange={handleChange}
-              className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-yellow-400 transition-colors"
+              placeholder="e.g. Steven Spielberg"
+              className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:border-yellow-400 transition-colors"
             />
           </div>
 

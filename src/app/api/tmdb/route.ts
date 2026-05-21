@@ -28,9 +28,10 @@ export async function GET(req: NextRequest) {
   }
 
   const data = await res.json();
-  const results = (data.results ?? []).slice(0, 8).map((movie: { title: string; release_date?: string }) => {
+  const results = (data.results ?? []).slice(0, 8).map((movie: { id: number; title: string; release_date?: string }) => {
     const year = movie.release_date ? movie.release_date.slice(0, 4) : null;
-    return year ? `${movie.title} (${year})` : movie.title;
+    const label = year ? `${movie.title} (${year})` : movie.title;
+    return { label, tmdbId: movie.id };
   });
 
   return NextResponse.json(results);
